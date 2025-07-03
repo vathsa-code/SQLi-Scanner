@@ -15,8 +15,7 @@ Think of it like giving the wrong command to a vending machine to get **free sna
 
 ---
 
-## 💥 Simple Example (non-technical analogy)
-
+## 💥 Simple Example
 Let’s say a login form asks you:
 ```
 Username: _______
@@ -32,7 +31,7 @@ Password: ' OR '1'='1
 
 Instead of logging in normally, this **confuses the website**, and it gives access **without checking the password** — because the input **alters the database query** behind the scenes.
 
-✅ Result: You're in. No password needed.  
+✅  Result: You're in. No password needed.  
 ⚠️ Risk: Total database compromise if not fixed.
 
 ---
@@ -51,7 +50,7 @@ It tells you:
 
 ---
 
-## 🖼️ Tool in Action (Screenshots)
+## 🖼️ Tool in Action+
 
 ### 🎯 Graphical User Interface
 
@@ -63,7 +62,7 @@ It tells you:
 
 ---
 
-### 🧪 Terminal Output (Advanced Mode)
+### 🧪 Terminal Output
 
 ![Terminal Output](./assets/terminal-output.png)
 
