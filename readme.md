@@ -31,8 +31,8 @@ Password: ' OR '1'='1
 
 Instead of logging in normally, this **confuses the website**, and it gives access **without checking the password** — because the input **alters the database query** behind the scenes.
 
-✅  Result: You're in. No password needed.  
-⚠️ Risk: Total database compromise if not fixed.
+Result: You're in. No password needed.  
+Risk: Total database compromise if not fixed.
 
 ---
 
@@ -50,7 +50,7 @@ It tells you:
 
 ---
 
-## 🖼️ Tool in Action+
+## 🖼️ Tool in Action
 
 ### 🎯 Graphical User Interface
 
