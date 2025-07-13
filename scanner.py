@@ -1,9 +1,13 @@
+# scanner.py
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import json
 from datetime import datetime
-import tkinter as tk
+import urllib3
+
+# Disable SSL warnings for testing purposes
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 with open("payloads.json", "r") as f:
     all_payloads = json.load(f)
@@ -41,45 +45,38 @@ def generate_attack_replay(url, method, data):
         payload_str = " -d \"" + "&".join([f"{k}={v}" for k, v in data.items()]) + "\""
         return f"curl -X POST \"{url}\"{payload_str}"
 
-def save_results(url, results, mode, log):
-    domain = url.split("//")[-1].split("/")[0]
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"sqlivuln_{domain}_{mode}_{timestamp}.json"
-
-    with open(filename, "w") as f:
-        json.dump(results, f, indent=4)
-
-    log(f"[+] JSON Report saved as: {filename}")
-
-def scan_sql_injection(url, mode="basic", gui_log=None, verdict_var=None):
-    def log(msg):
-        if gui_log:
-            gui_log.insert(tk.END, msg + "\n")
-            gui_log.see(tk.END)
-        else:
-            print(msg)
+def scan_sql_injection(url, mode="basic"):
+    output_logs = []
+    results = []
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "text/html,application/xhtml+xml",
+        "Connection": "keep-alive"
+    }
 
     try:
         session = requests.Session()
-        response = session.get(url, timeout=10)
+        response = session.get(url, headers=headers, timeout=10, verify=False)
+
+        if response.status_code != 200:
+            output_logs.append(f"[!] Failed to access {url} - Status Code: {response.status_code}")
+            return output_logs, None
+
         soup = BeautifulSoup(response.content, "html.parser")
         forms = soup.find_all("form")
-        results = []
 
         if not forms:
-            log(f"[!] No forms found on {url}")
-            if verdict_var:
-                verdict_var.set("No forms found")
-            return
+            output_logs.append(f"[!] No forms found on {url}")
+            return output_logs, None
 
-        log(f"[+] Found {len(forms)} form(s) on {url}")
+        output_logs.append(f"[+] Found {len(forms)} form(s) on {url}")
         payloads = all_payloads.get(mode, [])
 
         for form in forms:
             action = form.get("action")
             method = form.get("method", "get").lower()
             form_url = urljoin(url, action)
-            inputs = form.find_all(["input", "textarea"])
+            inputs = form.find_all(["input", "textarea", "select"])
             input_names = [inp.get("name") for inp in inputs if inp.get("name")]
 
             for name in input_names:
@@ -89,9 +86,9 @@ def scan_sql_injection(url, mode="basic", gui_log=None, verdict_var=None):
                         data[field] = payload if field == name else "test"
 
                     if method == "post":
-                        res = session.post(form_url, data=data)
+                        res = session.post(form_url, data=data, headers=headers, verify=False)
                     else:
-                        res = session.get(form_url, params=data)
+                        res = session.get(form_url, params=data, headers=headers, verify=False)
 
                     for error in error_signatures:
                         if error.lower() in res.text.lower():
@@ -106,39 +103,24 @@ def scan_sql_injection(url, mode="basic", gui_log=None, verdict_var=None):
                                 "attack_replay": attack
                             }
                             results.append(result)
-                            log(f"[!] SQLi in parameter '{name}'")
-                            log(f"    ↪ Payload: {payload}")
-                            log(f"    ↪ Replay: {attack}")
+                            output_logs.append(f"[!] SQLi in parameter '{name}'")
+                            output_logs.append(f"    ↪ Payload: {payload}")
+                            output_logs.append(f"    ↪ Replay: {attack}")
                             break
 
         if results:
-            save_results(url, results, mode, log)
-            log("\n[+] Scan Summary:")
-            log(f"    - Total forms scanned: {len(forms)}")
-            log(f"    - Total issues found: {len(results)}")
-            affected_forms = list({r['url'] for r in results})
-            log(f"    - Forms with vulnerabilities: {len(affected_forms)}")
-            log(f"    - Vulnerable parameters: {list({r['vulnerable_parameter'] for r in results})}")
-            if verdict_var:
-                verdict_var.set("⚠️ Vulnerabilities found")
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            domain = url.split("//")[-1].split("/")[0]
+            filename = f"sqlivuln_{domain}_{mode}_{timestamp}.json"
+            with open(filename, "w") as f:
+                json.dump(results, f, indent=4)
+            output_logs.append(f"[+] JSON Report saved as: {filename}")
+
+            return output_logs, filename
         else:
-            log("[+] No SQL injection vulnerabilities detected.")
-            if verdict_var:
-                verdict_var.set("✅ No vulnerabilities found")
+            output_logs.append("[+] No SQL injection vulnerabilities detected.")
+            return output_logs, None
 
     except Exception as e:
-        log(f"[!] Error scanning {url}: {e}")
-        if verdict_var:
-            verdict_var.set("❌ Scan failed")
-
-if __name__ == "__main__":
-    target = input("Enter URL to scan: ").strip()
-    print("Mode options: basic | advanced")
-    mode = input("Select payload mode (default = basic): ").strip().lower()
-    if mode not in ["basic", "advanced"]:
-        mode = "basic"
-
-    if target:
-        scan_sql_injection(target, mode)
-    else:
-        print("[!] URL is required.")
+        output_logs.append(f"[!] Error scanning {url}: {str(e)}")
+        return output_logs, None

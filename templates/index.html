@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SQL Injection Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 700px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input[type=text], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>SQL Injection Vulnerability Scanner</h2>
+        <form method="POST">
+            <label>Target URL:</label>
+            <input type="text" name="url" placeholder="e.g., http://testphp.vulnweb.com" required>
+
+            <label>Payload Mode:</label>
+            <select name="mode">
+                <option value="basic">Basic</option>
+                <option value="advanced">Advanced</option>
+            </select>
+
+            <button type="submit">Start Scan</button>
+        </form>
+    </div>
+</body>
+</html>
