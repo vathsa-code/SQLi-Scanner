@@ -3,7 +3,7 @@ from scanner import scan_sql_injection
 import os
 import json
 import pdfkit
-from pdfkit.configuration import Configuration  # ✅ Needed for manual wkhtmltopdf path
+from pdfkit.configuration import Configuration
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -60,4 +60,4 @@ def export_pdf():
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
